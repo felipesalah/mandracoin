@@ -1,12 +1,8 @@
 import sha256 from 'sha256';
 
-export const BLOCKCHAIN = () => {
-    const chain = [];
-    const pendingTransactions = [];
-    // GENESIS BLOCK
-    createNewBlock(777, 'MANDRA', 'COIN', { chain, pendingTransactions })
-
-    return { chain, pendingTransactions };
+export const BLOCKCHAIN =  {
+    chain: [],
+    pendingTransactions: []
 }
 
 export const createNewBlock = (nonce, previousBlockHash, hash, target) => {
@@ -29,7 +25,7 @@ export const getLastBlock = chain => {
     return chain[chain.length - 1];
 }
 
-export const creatNewTransaction = (amount, sender, recipient, target) => {
+export const createNewTransaction = (amount, sender, recipient, target) => {
     const newTransaction = { amount, sender, recipient };
     target.pendingTransactions.push(newTransaction);
 
@@ -49,7 +45,7 @@ export const proofOfWork = (previousBlockHash, currentBlockData) => {
     while (hash.substring(0, 4) !== '0000') {
         nonce++;
         hash = hashBlock(previousBlockHash, currentBlockData, nonce);
-        console.log(hash);
+        // console.log(hash);
     }
 
     return nonce;
