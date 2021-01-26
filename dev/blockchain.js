@@ -3,10 +3,12 @@ import sha256 from 'sha256';
 class Blockchain {
     chain = [];
     pendingTransactions = [];
+    currentNodeUrl = process.argv[3];
+    networkNodes = [];
 
-    constructor() {
+    constructor(nonce, previousBlockHash, hash) {
         // GENESIS BLOCK
-        this.createNewBlock(777, 'MANDRA', 'COIN');
+        this.createNewBlock(nonce, previousBlockHash, hash);
     }
 
     createNewBlock = (nonce, previousBlockHash, hash) => {
@@ -33,7 +35,7 @@ class Blockchain {
         const newTransaction = { amount, sender, recipient };
         this.pendingTransactions.push(newTransaction);
     
-        return getLastBlock().index + 1;
+        return this.getLastBlock().index + 1;
     }
     
     hashBlock = (previousBlockHash, currentBlockData, nonce) => {
@@ -45,10 +47,10 @@ class Blockchain {
     
     proofOfWork = (previousBlockHash, currentBlockData) => {
         let nonce = 0;
-        let hash = hashBlock(previousBlockHash, currentBlockData, nonce);
+        let hash = this.hashBlock(previousBlockHash, currentBlockData, nonce);
         while (hash.substring(0, 4) !== '0000') {
             nonce++;
-            hash = hashBlock(previousBlockHash, currentBlockData, nonce);
+            hash = this.hashBlock(previousBlockHash, currentBlockData, nonce);
             // console.log(hash);
         }
     

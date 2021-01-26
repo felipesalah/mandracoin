@@ -6,7 +6,11 @@
   "scripts": {
     "build": "babel ./dev/*.js -d dist",
     "start": "npm run build && node dist/index.js",
-    "start:api": "npm run build && nodemon --watch dist -e js dist/api.js",
+    "start:node_1": "npm run build && nodemon --watch dist -e js dist/networkNode.js 3001 http://localhost:3001",
+    "start:node_2": "npm run build && nodemon --watch dist -e js dist/networkNode.js 3002 http://localhost:3002",
+    "start:node_3": "npm run build && nodemon --watch dist -e js dist/networkNode.js 3003 http://localhost:3003",
+    "start:node_4": "npm run build && nodemon --watch dist -e js dist/networkNode.js 3004 http://localhost:3004",
+    "start:node_5": "npm run build && nodemon --watch dist -e js dist/networkNode.js 3005 http://localhost:3005",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Felipe Del Valle",
@@ -14,9 +18,11 @@
   "devDependencies": {
     "@babel/cli": "^7.12.10",
     "@babel/core": "^7.12.10",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
     "@babel/preset-env": "^7.12.11"
   },
   "dependencies": {
+    "axios": "^0.21.1",
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
     "nodemon": "^2.0.7",
