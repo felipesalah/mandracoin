@@ -4,13 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "babel ./dev/*.js -d dist",
-    "start": "npm run build && node dist/index.js",
-    "start:node_1": "npm run build && nodemon --watch dist -e js dist/networkNode.js 3001 http://localhost:3001",
-    "start:node_2": "npm run build && nodemon --watch dist -e js dist/networkNode.js 3002 http://localhost:3002",
-    "start:node_3": "npm run build && nodemon --watch dist -e js dist/networkNode.js 3003 http://localhost:3003",
-    "start:node_4": "npm run build && nodemon --watch dist -e js dist/networkNode.js 3004 http://localhost:3004",
-    "start:node_5": "npm run build && nodemon --watch dist -e js dist/networkNode.js 3005 http://localhost:3005",
+    "build": "webpack --config webpack.config.js",
+    "start": "npm run build && node dist/bundle.js",
+    "start:node_1": "nodemon --watch dist -e js dist/bundle.js 3001 http://localhost:3001",
+    "start:node_2": "nodemon --watch dist -e js dist/bundle.js 3002 http://localhost:3002",
+    "start:node_3": "nodemon --watch dist -e js dist/bundle.js 3003 http://localhost:3003",
+    "start:node_4": "nodemon --watch dist -e js dist/bundle.js 3004 http://localhost:3004",
+    "start:node_5": "nodemon --watch dist -e js dist/bundle.js 3005 http://localhost:3005",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Felipe Del Valle",
@@ -18,8 +18,21 @@
   "devDependencies": {
     "@babel/cli": "^7.12.10",
     "@babel/core": "^7.12.10",
+    "@babel/node": "^7.12.10",
     "@babel/plugin-proposal-class-properties": "^7.12.1",
-    "@babel/preset-env": "^7.12.11"
+    "@babel/preset-env": "^7.12.11",
+    "assert": "^2.0.0",
+    "babel-loader": "^8.2.2",
+    "browserify-zlib": "^0.2.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.0",
+    "path-browserify": "^1.0.1",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.1.1",
+    "util": "^0.12.3",
+    "webpack": "^5.18.0",
+    "webpack-cli": "^4.4.0",
+    "webpack-dev-server": "^3.11.2"
   },
   "dependencies": {
     "axios": "^0.21.1",

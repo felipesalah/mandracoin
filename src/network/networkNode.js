@@ -28,33 +28,33 @@ class NetworkNode {
         this.api.post('/blockchain/network-node/register', this.registerNode);
         this.api.post('/blockchain/network-node/register-bulk', this.registerNodesBulk);
         
-        api.listen(port, () => {
-            console.log(`Listening on port ${port}...`)
+        this.api.listen(this.port, () => {
+            console.log(`Listening on port ${this.port}...`)
         });
     }
 
     getBlockchain = (req, res) => {
-        res.send(mandracoin);
+        res.send(this.mandracoin);
     }
 
     createTransaction = (req, res) => {
-        const blockIndex = mandracoin.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
+        const blockIndex = this.mandracoin.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
         res.json({ message: `Transaction added in blocK: ${blockIndex}` });
     }
 
     mine = (req, res) => {
-        const lastBlock = mandracoin.getLastBlock();
+        const lastBlock = this.mandracoin.getLastBlock();
         const previousBlockHash = lastBlock.hash;
         const currentBlockData = {
-            transactions: mandracoin.pendingTransactions,
+            transactions: this.mandracoin.pendingTransactions,
             index: lastBlock.index + 1
         };
-        const nonce = mandracoin.proofOfWork(previousBlockHash, currentBlockData);
-        const hash = mandracoin.hashBlock(previousBlockHash, currentBlockData, nonce);
+        const nonce = this.mandracoin.proofOfWork(previousBlockHash, currentBlockData);
+        const hash = this.mandracoin.hashBlock(previousBlockHash, currentBlockData, nonce);
 
-        mandracoin.createNewTransaction(12.5, '00', nodeAddress);
+        this.mandracoin.createNewTransaction(12.5, '00', this.nodeAddress);
 
-        const newBlock = mandracoin.createNewBlock(nonce, previousBlockHash, hash);
+        const newBlock = this.mandracoin.createNewBlock(nonce, previousBlockHash, hash);
 
         res.json({
             message: 'Block mined successfully!',
@@ -65,9 +65,9 @@ class NetworkNode {
     broadcastNode = (req, res) => {
         const newNodeUrl = req.body.newNodeUrl;
         const registerNodePromises = [];
-        if (!mandracoin.networkNodes.includes(newNodeUrl)) mandracoin.networkNodes.push(newNodeUrl);
+        if (!this.mandracoin.networkNodes.includes(newNodeUrl)) this.mandracoin.networkNodes.push(newNodeUrl);
 
-        mandracoin.networkNodes.map(nodeUrl => {
+        this.mandracoin.networkNodes.map(nodeUrl => {
             const request = new HttpService(nodeUrl);
             registerNodePromises.push(request.post('/blockchain/network-node/register', { newNodeUrl }));
         });
@@ -76,7 +76,7 @@ class NetworkNode {
             .then(() => {
                 const request = new HttpService(newNodeUrl);
                 return request.post('/blockchain/network-node/register-bulk', { 
-                    allNetworkNodes: [ ...mandracoin.networkNodes, mandracoin.currentNodeUrl ] 
+                    allNetworkNodes: [ ...this.mandracoin.networkNodes, this.mandracoin.currentNodeUrl ] 
                 });
             })
             .then(() => {
@@ -86,9 +86,9 @@ class NetworkNode {
 
     registerNode = (req, res) => {
         const newNodeUrl = req.body.newNodeUrl;
-        const dontExist = !mandracoin.networkNodes.includes(newNodeUrl);
-        const notTheSame = mandracoin.currentNodeUrl !== newNodeUrl;
-        if (dontExist && notTheSame) mandracoin.networkNodes.push(newNodeUrl);
+        const dontExist = !this.mandracoin.networkNodes.includes(newNodeUrl);
+        const notTheSame = this.mandracoin.currentNodeUrl !== newNodeUrl;
+        if (dontExist && notTheSame) this.mandracoin.networkNodes.push(newNodeUrl);
 
         res.json({ message: 'New node has been registered!' });
     }
@@ -96,9 +96,9 @@ class NetworkNode {
     registerNodesBulk = (req, res) => {
         const allNetworkNodes = req.body.allNetworkNodes;
         allNetworkNodes.map(nodeUrl => {
-            const dontExist = !mandracoin.networkNodes.includes(nodeUrl);
-            const notTheSame = mandracoin.currentNodeUrl !== nodeUrl;
-            if (dontExist && notTheSame) mandracoin.networkNodes.push(nodeUrl);
+            const dontExist = !this.mandracoin.networkNodes.includes(nodeUrl);
+            const notTheSame = this.mandracoin.currentNodeUrl !== nodeUrl;
+            if (dontExist && notTheSame) this.mandracoin.networkNodes.push(nodeUrl);
         });
 
         res.json({ message: 'Bulk has been registered!' });
