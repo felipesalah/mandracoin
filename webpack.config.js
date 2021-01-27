@@ -34,11 +34,15 @@ module.exports = {
     }
   },
   target: 'node',
+  externals: {
+    express: 'express',
+  },
   plugins: [
     new webpack.HotModuleReplacementPlugin()
   ],
   devServer: {
     hot: true,
     historyApiFallback: true
-  }
+  },
+  mode: 'production'
 };
