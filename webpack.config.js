@@ -1,5 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
+const nodeExternals = require('webpack-node-externals');
 
 module.exports = {
   entry: './src/index.js',
@@ -34,9 +35,7 @@ module.exports = {
     }
   },
   target: 'node',
-  externals: {
-    express: 'express',
-  },
+  externals: [nodeExternals()],
   plugins: [
     new webpack.HotModuleReplacementPlugin()
   ],
@@ -44,5 +43,5 @@ module.exports = {
     hot: true,
     historyApiFallback: true
   },
-  mode: 'production'
+  mode: 'development'
 };

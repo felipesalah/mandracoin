@@ -1,4 +1,5 @@
 import sha256 from 'sha256';
+import { v1 } from 'uuid';
 
 class Blockchain {
     chain = [];
@@ -33,9 +34,19 @@ class Blockchain {
     }
     
     createNewTransaction = (amount, sender, recipient) => {
-        const newTransaction = { amount, sender, recipient };
-        this.pendingTransactions.push(newTransaction);
+        const newTransaction = { 
+            amount, 
+            sender, 
+            recipient,
+            transactionId: v1().split('-').join('')
+        };
     
+        return newTransaction;
+    }
+
+    addTransactionToPending = transaction => {
+        this.pendingTransactions.push(transaction);
+
         return this.getLastBlock().index + 1;
     }
     

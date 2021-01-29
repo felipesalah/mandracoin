@@ -32,7 +32,8 @@
     "util": "^0.12.3",
     "webpack": "^5.18.0",
     "webpack-cli": "^4.4.0",
-    "webpack-dev-server": "^3.11.2"
+    "webpack-dev-server": "^3.11.2",
+    "webpack-node-externals": "^2.5.2"
   },
   "dependencies": {
     "axios": "^0.21.1",

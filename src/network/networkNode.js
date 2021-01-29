@@ -23,7 +23,9 @@ class NetworkNode {
 
         this.api.get('/blockchain', this.getBlockchain);
         this.api.post('/blockchain/transaction', this.createTransaction);
-        this.api.get('/blockchain/mine', this.mine);
+        this.api.post('/blockchain/transaction/broadcast', this.broadcastTransaction);
+        this.api.get('/blockchain/block/mine', this.mine);
+        this.api.post('/blockchain/block/receive', this.receiveBlock);
         this.api.post('/blockchain/network-node/broadcast', this.broadcastNode);
         this.api.post('/blockchain/network-node/register', this.registerNode);
         this.api.post('/blockchain/network-node/register-bulk', this.registerNodesBulk);
@@ -38,8 +40,26 @@ class NetworkNode {
     }
 
     createTransaction = (req, res) => {
-        const blockIndex = this.mandracoin.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
-        res.json({ message: `Transaction added in blocK: ${blockIndex}` });
+        const newTransaction = req.body;
+        const blockIndex = this.mandracoin.addTransactionToPending(newTransaction);
+
+        res.json({ message: `Transaction will be added in block: ${blockIndex}` });
+    }
+
+    broadcastTransaction = (req, res) => {
+        const newTransaction = this.mandracoin.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
+        const registerTransactionsPromises = [];
+        this.mandracoin.addTransactionToPending(newTransaction);
+
+        this.mandracoin.networkNodes.map(nodeUrl => {
+            const request = new HttpService(nodeUrl);
+            registerTransactionsPromises.push(request.post('/blockchain/transaction', newTransaction));
+        });
+
+        Promise.all(registerTransactionsPromises)
+            .then(() => {
+                res.json({ message: 'New transaction has been created and broadcasted!' });
+            });
     }
 
     mine = (req, res) => {
@@ -51,15 +71,43 @@ class NetworkNode {
         };
         const nonce = this.mandracoin.proofOfWork(previousBlockHash, currentBlockData);
         const hash = this.mandracoin.hashBlock(previousBlockHash, currentBlockData, nonce);
-
-        this.mandracoin.createNewTransaction(12.5, '00', this.nodeAddress);
-
+        const registerBlockPromises = [];
         const newBlock = this.mandracoin.createNewBlock(nonce, previousBlockHash, hash);
 
-        res.json({
-            message: 'Block mined successfully!',
-            block: newBlock
+        this.mandracoin.networkNodes.map(nodeUrl => {
+            const request = new HttpService(nodeUrl);
+            registerBlockPromises.push(request.post('/blockchain/block/receive', { newBlock }));
         });
+
+        Promise.all(registerNodePromises)
+            .then(() => {
+                const request = new HttpService(newNodeUrl);
+                return request.post('/blockchain/transaction/broadcast', { 
+                    amount: 12.5, sender: "00", recipient: this.nodeAddress
+                });
+            })
+            .then(() => {
+                res.json({
+                    message: 'New Block has been mined and broadcasted!',
+                    block: newBlock
+                });
+            });
+    }
+
+    receiveBlock = (req, res) => {
+        const newBlock = req.body.newBlock;
+        const lastBlock = this.mandracoin.getLastBlock();
+        const isValidHash = lastBlock.hash === newBlock.previousBlockHash;
+        const isValidIndex = lastBlock.index + 1 === newBlock.index;
+
+        if (isValidHash && isValidIndex) {
+            this.mandracoin.chain.push(newBlock);
+            this.mandracoin.pendingTransactions = [];
+
+            res.json({ message: 'A new Block has been received!', newBlock });
+        } else {
+            res.json({ message: 'The block has been rejected.', newBlock });
+        }
     }
 
     broadcastNode = (req, res) => {
