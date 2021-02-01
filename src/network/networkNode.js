@@ -79,9 +79,9 @@ class NetworkNode {
             registerBlockPromises.push(request.post('/blockchain/block/receive', { newBlock }));
         });
 
-        Promise.all(registerNodePromises)
+        Promise.all(registerBlockPromises)
             .then(() => {
-                const request = new HttpService(newNodeUrl);
+                const request = new HttpService(this.mandracoin.currentNodeUrl);
                 return request.post('/blockchain/transaction/broadcast', { 
                     amount: 12.5, sender: "00", recipient: this.nodeAddress
                 });
