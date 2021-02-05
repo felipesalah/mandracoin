@@ -6,11 +6,17 @@ class Blockchain {
     pendingTransactions = [];
     currentNodeUrl;
     networkNodes = [];
+    nonce;
+    previousBlockHash;
+    hash;
 
     constructor(nonce, previousBlockHash, hash, currentNodeUrl) {
+        this.nonce = nonce;
+        this.previousBlockHash = previousBlockHash;
+        this.hash = hash;
+        this.currentNodeUrl = currentNodeUrl;
         // GENESIS BLOCK
         this.createNewBlock(nonce, previousBlockHash, hash);
-        this.currentNodeUrl = currentNodeUrl;
     }
 
     createNewBlock = (nonce, previousBlockHash, hash) => {
@@ -67,6 +73,28 @@ class Blockchain {
         }
     
         return nonce;
+    }
+
+    validateChain = chain => {
+        let isValid = true;
+        chain.map((currentBlock, index) => {
+            const isGenesisBlock = index === 0;
+            if (isGenesisBlock) {
+                const correctNonce = currentBlock.nonce === this.nonce;
+                const correctPreviousBlockHash = currentBlock.previousBlockHash === this.previousBlockHash;
+                const correctHash = currentBlock.hash === this.hash;
+                const correctTransactions = currentBlock.transactions.length === 0;
+                if (!correctNonce || !correctPreviousBlockHash || !correctHash || !correctTransactions) isValid = false;
+            } else {
+                const previousBlock = chain[index - 1];
+                const currentBlockData = { transactions: currentBlock.transactions, index: currentBlock.index };
+                const currentBlockHash = this.hashBlock(previousBlock.hash, currentBlockData, currentBlock.nonce);
+                if (currentBlockHash.substr(0, 4) !== '0000') isValid = false;
+                if (currentBlock.previousBlockHash !== previousBlock.hash) isValid = false;
+            }
+        })
+
+        return isValid;
     }
 
 }

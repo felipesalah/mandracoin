@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import { v1 } from 'uuid';
 import Blockchain from '../blockchain';
 import HttpService from '../http';
+import ROUTES from './routes';
 
 class NetworkNode {
     mandracoin;
@@ -21,14 +22,15 @@ class NetworkNode {
         this.api.use(bodyParser.json());
         this.api.use(bodyParser.urlencoded({ extended: false }));
 
-        this.api.get('/blockchain', this.getBlockchain);
-        this.api.post('/blockchain/transaction', this.createTransaction);
-        this.api.post('/blockchain/transaction/broadcast', this.broadcastTransaction);
-        this.api.get('/blockchain/block/mine', this.mine);
-        this.api.post('/blockchain/block/receive', this.receiveBlock);
-        this.api.post('/blockchain/network-node/broadcast', this.broadcastNode);
-        this.api.post('/blockchain/network-node/register', this.registerNode);
-        this.api.post('/blockchain/network-node/register-bulk', this.registerNodesBulk);
+        this.api.get(ROUTES.getBlockchain, this.getBlockchain);
+        this.api.post(ROUTES.createTransaction, this.createTransaction);
+        this.api.post(ROUTES.broadcastTransaction, this.broadcastTransaction);
+        this.api.get(ROUTES.mine, this.mine);
+        this.api.post(ROUTES.receiveBlock, this.receiveBlock);
+        this.api.post(ROUTES.broadcastNode, this.broadcastNode);
+        this.api.post(ROUTES.registerNode, this.registerNode);
+        this.api.post(ROUTES.registerNodesBulk, this.registerNodesBulk);
+        this.api.get(ROUTES.consensus, this.consensus);
         
         this.api.listen(this.port, () => {
             console.log(`Listening on port ${this.port}...`)
@@ -53,7 +55,7 @@ class NetworkNode {
 
         this.mandracoin.networkNodes.map(nodeUrl => {
             const request = new HttpService(nodeUrl);
-            registerTransactionsPromises.push(request.post('/blockchain/transaction', newTransaction));
+            registerTransactionsPromises.push(request.post(ROUTES.createTransaction, newTransaction));
         });
 
         Promise.all(registerTransactionsPromises)
@@ -76,13 +78,13 @@ class NetworkNode {
 
         this.mandracoin.networkNodes.map(nodeUrl => {
             const request = new HttpService(nodeUrl);
-            registerBlockPromises.push(request.post('/blockchain/block/receive', { newBlock }));
+            registerBlockPromises.push(request.post(ROUTES.receiveBlock, { newBlock }));
         });
 
         Promise.all(registerBlockPromises)
             .then(() => {
                 const request = new HttpService(this.mandracoin.currentNodeUrl);
-                return request.post('/blockchain/transaction/broadcast', { 
+                return request.post(ROUTES.broadcastTransaction, { 
                     amount: 12.5, sender: "00", recipient: this.nodeAddress
                 });
             })
@@ -117,13 +119,13 @@ class NetworkNode {
 
         this.mandracoin.networkNodes.map(nodeUrl => {
             const request = new HttpService(nodeUrl);
-            registerNodePromises.push(request.post('/blockchain/network-node/register', { newNodeUrl }));
+            registerNodePromises.push(request.post(ROUTES.registerNode, { newNodeUrl }));
         });
 
         Promise.all(registerNodePromises)
             .then(() => {
                 const request = new HttpService(newNodeUrl);
-                return request.post('/blockchain/network-node/register-bulk', { 
+                return request.post(ROUTES.registerNodesBulk, { 
                     allNetworkNodes: [ ...this.mandracoin.networkNodes, this.mandracoin.currentNodeUrl ] 
                 });
             })
@@ -150,6 +152,38 @@ class NetworkNode {
         });
 
         res.json({ message: 'Bulk has been registered!' });
+    }
+
+    consensus = (req, res) => {
+        const blockchainPromises = [];
+        this.mandracoin.networkNodes.map(nodeUrl => {
+            const request = new HttpService(nodeUrl);
+            blockchainPromises.push(request.get(ROUTES.getBlockchain))
+        });
+
+        Promise.all(blockchainPromises)
+            .then(blockchains => {
+                const currentChainLength = this.mandracoin.chain.length;
+                let maxChainLength = currentChainLength;
+                let longestChain = null;
+                let pendingTransactions = null;
+                blockchains.map(blockchain => {
+                    if (blockchain.chain.length > maxChainLength) {
+                        maxChainLength = blockchain.chain.length;
+                        longestChain = blockchain.chain;
+                        pendingTransactions = blockchain.pendingTransactions;
+                    }
+                });
+
+                const notValidChain = !longestChain || (longestChain && !this.mandracoin.validateChain(longestChain));
+                if (notValidChain) {
+                    res.json({ message: 'The Chain has not been replaced.' , chain: this.mandracoin.chain });
+                } else {
+                    this.mandracoin.chain = longestChain;
+                    this.mandracoin.pendingTransactions = pendingTransactions;
+                    res.json({ message: 'The Chain has been replaced.' , chain: this.mandracoin.chain });
+                }
+            })
     }
 
 }
